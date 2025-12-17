@@ -4,7 +4,6 @@
 #include "SideScrollingJumpPad.h"
 #include "Components/BoxComponent.h"
 #include "GameFramework/Character.h"
-#include "GameFramework/CharacterMovementComponent.h"
 #include "Components/SceneComponent.h"
 
 ASideScrollingJumpPad::ASideScrollingJumpPad()

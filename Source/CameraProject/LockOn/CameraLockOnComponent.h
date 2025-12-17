@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "ILockOnTarget.h"
 #include "CameraLockOnComponent.generated.h"
 
 class UCameraComponent;
@@ -54,22 +53,22 @@ public:
 
 protected:
 	/** Find all valid targets within camera field of view */
-	TArray<AActor*> FindTargetsInView();
+	TArray<AActor*> FindTargetsInView() const;
 
 	/** Check if a target is within the camera's field of view */
-	bool IsTargetInView(AActor* Target, const FVector& CameraLocation, const FVector& CameraForward, float FOV) const;
+	static bool IsTargetInView(AActor* Target, const FVector& CameraLocation, const FVector& CameraForward, float FOV);
 
 	/** Check if there's a clear line of sight to the target */
 	bool HasLineOfSight(AActor* Target, const FVector& CameraLocation) const;
 
 	/** Select the best target from a list of candidates */
-	AActor* SelectBestTarget(const TArray<AActor*>& Candidates, const FVector& CameraLocation, const FVector& CameraForward) const;
+	static AActor* SelectBestTarget(const TArray<AActor*>& Candidates, const FVector& CameraLocation, const FVector& CameraForward);
 
 	/** Update camera rotation to face the locked-on target */
 	void UpdateCameraRotation(float DeltaTime);
 
 	/** Calculate score for a target (lower is better, targets closer to center of screen win) */
-	float CalculateTargetScore(AActor* Target, const FVector& CameraLocation, const FVector& CameraForward) const;
+	static float CalculateTargetScore(AActor* Target, const FVector& CameraLocation, const FVector& CameraForward);
 
 	/** Find the next target to the left or right of current target */
 	AActor* FindNextTargetInDirection(bool bLeft) const;

@@ -11,7 +11,6 @@
 #include "TimerManager.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Animation/AnimInstance.h"
-#include "ILockOnTarget.h"
 
 ACombatEnemy::ACombatEnemy()
 {

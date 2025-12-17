@@ -5,7 +5,6 @@
 #include "Kismet/GameplayStatics.h"
 #include "Blueprint/UserWidget.h"
 #include "SideScrollingUI.h"
-#include "SideScrollingPickup.h"
 
 void ASideScrollingGameMode::BeginPlay()
 {

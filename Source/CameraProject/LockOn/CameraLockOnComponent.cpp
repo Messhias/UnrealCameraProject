@@ -2,14 +2,15 @@
 
 #include "CameraLockOnComponent.h"
 #include "Camera/CameraComponent.h"
-#include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/PlayerController.h"
-#include "Components/CapsuleComponent.h"
 #include "Engine/World.h"
 #include "DrawDebugHelpers.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "CameraProjectCharacter.h"
+#include "ILockOnTarget.h"
+
+class ILockOnTarget;
 
 UCameraLockOnComponent::UCameraLockOnComponent(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -27,7 +28,7 @@ void UCameraLockOnComponent::BeginPlay()
 	if (OwnerCharacter)
 	{
 		// Try to get camera from CameraProjectCharacter
-		if (ACameraProjectCharacter* CameraChar = Cast<ACameraProjectCharacter>(OwnerCharacter))
+		if (const ACameraProjectCharacter* CameraChar = Cast<ACameraProjectCharacter>(OwnerCharacter))
 		{
 			CameraComponent = CameraChar->GetFollowCamera();
 			SpringArmComponent = CameraChar->GetCameraBoom();
@@ -35,7 +36,8 @@ void UCameraLockOnComponent::BeginPlay()
 	}
 }
 
-void UCameraLockOnComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+void UCameraLockOnComponent::TickComponent(const float DeltaTime, const ELevelTick TickType,
+                                           FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
@@ -52,12 +54,12 @@ void UCameraLockOnComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	}
 
 	// Check if target is still valid
-	if (ILockOnTarget* LockOnTarget = Cast<ILockOnTarget>(LockedOnTarget.Get()))
+	if (const ILockOnTarget* LockOnTarget = Cast<ILockOnTarget>(LockedOnTarget.Get()))
 	{
 		if (!LockOnTarget->IsLockOnValid())
 		{
 			// Target is no longer valid, try to find a new one
-			TArray<AActor*> ValidTargets = FindTargetsInView();
+			const TArray<AActor*> ValidTargets = FindTargetsInView();
 			if (ValidTargets.Num() > 0)
 			{
 				const FVector CameraLocation = CameraComponent->GetComponentLocation();
@@ -81,7 +83,7 @@ void UCameraLockOnComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	UpdateCameraRotation(DeltaTime);
 }
 
-void UCameraLockOnComponent::SetLockOnEnabled(bool bEnabled)
+void UCameraLockOnComponent::SetLockOnEnabled(const bool bEnabled)
 {
 	if (bEnabled == bIsLockedOn)
 	{
@@ -91,8 +93,7 @@ void UCameraLockOnComponent::SetLockOnEnabled(bool bEnabled)
 	if (bEnabled)
 	{
 		// Try to find and lock onto a target
-		TArray<AActor*> ValidTargets = FindTargetsInView();
-		if (ValidTargets.Num() > 0)
+		if (const TArray<AActor*> ValidTargets = FindTargetsInView(); ValidTargets.Num() > 0)
 		{
 			const FVector CameraLocation = CameraComponent->GetComponentLocation();
 			const FVector CameraForward = CameraComponent->GetForwardVector();
@@ -123,8 +124,7 @@ void UCameraLockOnComponent::SwitchTargetLeft()
 		return;
 	}
 
-	AActor* NextTarget = FindNextTargetInDirection(true);
-	if (NextTarget)
+	if (AActor* NextTarget = FindNextTargetInDirection(true))
 	{
 		LockedOnTarget = NextTarget;
 	}
@@ -137,14 +137,13 @@ void UCameraLockOnComponent::SwitchTargetRight()
 		return;
 	}
 
-	AActor* NextTarget = FindNextTargetInDirection(false);
-	if (NextTarget)
+	if (AActor* NextTarget = FindNextTargetInDirection(false))
 	{
 		LockedOnTarget = NextTarget;
 	}
 }
 
-TArray<AActor*> UCameraLockOnComponent::FindTargetsInView()
+TArray<AActor*> UCameraLockOnComponent::FindTargetsInView() const
 {
 	TArray<AActor*> ValidTargets;
 
@@ -180,7 +179,7 @@ TArray<AActor*> UCameraLockOnComponent::FindTargetsInView()
 	// Filter to only valid lock-on targets that are in view
 	for (AActor* Actor : OverlappingActors)
 	{
-		if (ILockOnTarget* LockOnTarget = Cast<ILockOnTarget>(Actor))
+		if (const ILockOnTarget* LockOnTarget = Cast<ILockOnTarget>(Actor))
 		{
 			if (!LockOnTarget->IsLockOnValid())
 			{
@@ -214,14 +213,15 @@ TArray<AActor*> UCameraLockOnComponent::FindTargetsInView()
 	return ValidTargets;
 }
 
-bool UCameraLockOnComponent::IsTargetInView(AActor* Target, const FVector& CameraLocation, const FVector& CameraForward, float FOV) const
+bool UCameraLockOnComponent::IsTargetInView(AActor* Target, const FVector& CameraLocation, const FVector& CameraForward,
+                                            const float FOV)
 {
 	if (!Target)
 	{
 		return false;
 	}
 
-	ILockOnTarget* LockOnTarget = Cast<ILockOnTarget>(Target);
+	const ILockOnTarget* LockOnTarget = Cast<ILockOnTarget>(Target);
 	if (!LockOnTarget)
 	{
 		return false;
@@ -247,7 +247,7 @@ bool UCameraLockOnComponent::HasLineOfSight(AActor* Target, const FVector& Camer
 		return false;
 	}
 
-	ILockOnTarget* LockOnTarget = Cast<ILockOnTarget>(Target);
+	const ILockOnTarget* LockOnTarget = Cast<ILockOnTarget>(Target);
 	if (!LockOnTarget)
 	{
 		return false;
@@ -277,7 +277,8 @@ bool UCameraLockOnComponent::HasLineOfSight(AActor* Target, const FVector& Camer
 	return !bHit;
 }
 
-AActor* UCameraLockOnComponent::SelectBestTarget(const TArray<AActor*>& Candidates, const FVector& CameraLocation, const FVector& CameraForward) const
+AActor* UCameraLockOnComponent::SelectBestTarget(const TArray<AActor*>& Candidates, const FVector& CameraLocation,
+                                                 const FVector& CameraForward)
 {
 	if (Candidates.Num() == 0)
 	{
@@ -295,8 +296,7 @@ AActor* UCameraLockOnComponent::SelectBestTarget(const TArray<AActor*>& Candidat
 
 	for (AActor* Candidate : Candidates)
 	{
-		const float Score = CalculateTargetScore(Candidate, CameraLocation, CameraForward);
-		if (Score < BestScore)
+		if (const float Score = CalculateTargetScore(Candidate, CameraLocation, CameraForward); Score < BestScore)
 		{
 			BestScore = Score;
 			BestTarget = Candidate;
@@ -306,14 +306,15 @@ AActor* UCameraLockOnComponent::SelectBestTarget(const TArray<AActor*>& Candidat
 	return BestTarget;
 }
 
-float UCameraLockOnComponent::CalculateTargetScore(AActor* Target, const FVector& CameraLocation, const FVector& CameraForward) const
+float UCameraLockOnComponent::CalculateTargetScore(AActor* Target, const FVector& CameraLocation,
+                                                   const FVector& CameraForward)
 {
 	if (!Target)
 	{
 		return MAX_FLT;
 	}
 
-	ILockOnTarget* LockOnTarget = Cast<ILockOnTarget>(Target);
+	const ILockOnTarget* LockOnTarget = Cast<ILockOnTarget>(Target);
 	if (!LockOnTarget)
 	{
 		return MAX_FLT;
@@ -335,7 +336,7 @@ float UCameraLockOnComponent::CalculateTargetScore(AActor* Target, const FVector
 	// Weight angle more heavily so targets closer to center are preferred
 	const float AngleScore = AngleDegrees * 2.0f; // Weight angle more
 	const float DistanceScore = Distance / 100.0f; // Normalize distance
-	
+
 	// Subtract priority (higher priority = lower score)
 	const int32 Priority = LockOnTarget->GetLockOnPriority();
 	const float PriorityScore = -Priority * 10.0f;
@@ -343,14 +344,14 @@ float UCameraLockOnComponent::CalculateTargetScore(AActor* Target, const FVector
 	return AngleScore + DistanceScore + PriorityScore;
 }
 
-void UCameraLockOnComponent::UpdateCameraRotation(float DeltaTime)
+void UCameraLockOnComponent::UpdateCameraRotation(const float DeltaTime)
 {
 	if (!LockedOnTarget.IsValid() || !CameraComponent || !OwnerCharacter || !OwnerCharacter->GetController())
 	{
 		return;
 	}
 
-	ILockOnTarget* LockOnTarget = Cast<ILockOnTarget>(LockedOnTarget.Get());
+	const ILockOnTarget* LockOnTarget = Cast<ILockOnTarget>(LockedOnTarget.Get());
 	if (!LockOnTarget)
 	{
 		return;
@@ -364,18 +365,18 @@ void UCameraLockOnComponent::UpdateCameraRotation(float DeltaTime)
 	const FRotator DesiredRotation = DesiredDirection.Rotation();
 
 	// Get current control rotation
-	FRotator CurrentRotation = OwnerCharacter->GetControlRotation();
+	const FRotator CurrentRotation = OwnerCharacter->GetControlRotation();
 
 	// Calculate rotation delta
 	FRotator RotationDelta = DesiredRotation - CurrentRotation;
-	
-	// Normalize rotation delta to shortest path
+
+	// Normalize rotation delta to the shortest path
 	RotationDelta.Normalize();
 
 	// Check if we're within dead zone
 	const float YawDelta = FMath::Abs(RotationDelta.Yaw);
-	const float PitchDelta = FMath::Abs(RotationDelta.Pitch);
-	if (YawDelta <= DeadZoneAngle && PitchDelta <= DeadZoneAngle)
+	if (const float PitchDelta = FMath::Abs(RotationDelta.Pitch); YawDelta <= DeadZoneAngle && PitchDelta <=
+		DeadZoneAngle)
 	{
 		return; // Already close enough, don't rotate
 	}
@@ -384,13 +385,13 @@ void UCameraLockOnComponent::UpdateCameraRotation(float DeltaTime)
 	// RInterpTo uses interp speed as units per second, so we convert degrees/second to a suitable interp speed
 	// Higher values = faster interpolation (typical range is 1-20, we'll use a mapping)
 	const float InterpSpeed = CameraRotationSpeed / 60.0f; // Convert deg/s to a reasonable interp speed
-	FRotator NewRotation = FMath::RInterpTo(CurrentRotation, DesiredRotation, DeltaTime, InterpSpeed);
+	const FRotator NewRotation = FMath::RInterpTo(CurrentRotation, DesiredRotation, DeltaTime, InterpSpeed);
 
 	// Apply new rotation to controller
 	OwnerCharacter->GetController()->SetControlRotation(NewRotation);
 }
 
-AActor* UCameraLockOnComponent::FindNextTargetInDirection(bool bLeft) const
+AActor* UCameraLockOnComponent::FindNextTargetInDirection(const bool bLeft) const
 {
 	if (!LockedOnTarget.IsValid() || !CameraComponent || !OwnerCharacter)
 	{
@@ -398,10 +399,8 @@ AActor* UCameraLockOnComponent::FindNextTargetInDirection(bool bLeft) const
 	}
 
 	const FVector CameraLocation = CameraComponent->GetComponentLocation();
-	const FVector CameraForward = CameraComponent->GetForwardVector();
-	const FVector CameraRight = CameraComponent->GetRightVector();
 
-	ILockOnTarget* CurrentLockOnTarget = Cast<ILockOnTarget>(LockedOnTarget.Get());
+	const ILockOnTarget* CurrentLockOnTarget = Cast<ILockOnTarget>(LockedOnTarget.Get());
 	if (!CurrentLockOnTarget)
 	{
 		return nullptr;
@@ -425,25 +424,21 @@ AActor* UCameraLockOnComponent::FindNextTargetInDirection(bool bLeft) const
 
 	for (AActor* Candidate : ValidTargets)
 	{
-		ILockOnTarget* CandidateLockOnTarget = Cast<ILockOnTarget>(Candidate);
-		if (!CandidateLockOnTarget)
+		if (!Cast<ILockOnTarget>(Candidate))
 		{
 			continue;
 		}
 
-		const FVector CandidateLocation = CandidateLockOnTarget->GetLockOnLocation();
+		const FVector CandidateLocation = Cast<ILockOnTarget>(Candidate)->GetLockOnLocation();
 		const FVector DirectionToCandidate = (CandidateLocation - CameraLocation).GetSafeNormal();
 
-		// Calculate the angle from current target to candidate
-		// Use cross product to determine if candidate is to the left or right
-		const FVector CrossProduct = FVector::CrossProduct(DirectionToCurrentTarget, DirectionToCandidate);
-		const float DotWithUp = FVector::DotProduct(CrossProduct, CameraComponent->GetUpVector());
-
 		// Determine if candidate is in the desired direction
-		const bool bCandidateIsLeft = DotWithUp > 0.0f;
-		if (bCandidateIsLeft != bLeft)
+		if (const bool bCandidateIsLeft = FVector::DotProduct(
+				FVector::CrossProduct(DirectionToCurrentTarget, DirectionToCandidate),
+				CameraComponent->GetUpVector()) > 0.0f;
+			bCandidateIsLeft != bLeft)
 		{
-			continue; // Candidate is not in the desired direction
+			continue;
 		}
 
 		// Calculate angle between current target direction and candidate direction
@@ -463,4 +458,3 @@ AActor* UCameraLockOnComponent::FindNextTargetInDirection(bool bLeft) const
 
 	return BestTarget;
 }
-
