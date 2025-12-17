@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
-#include "EnhancedInput/Public/InputAction.h"
 #include "SideScrollingPlayerController.generated.h"
 
 class ASideScrollingCharacter;
@@ -19,9 +18,8 @@ UCLASS(abstract, Config="Game")
 class ASideScrollingPlayerController : public APlayerController
 {
 	GENERATED_BODY()
-	
-protected:
 
+protected:
 	/** Input mapping context for this player */
 	UPROPERTY(EditAnywhere, Category="Input|Input Mappings")
 	TArray<UInputMappingContext*> DefaultMappingContexts;
@@ -47,7 +45,6 @@ protected:
 	TSubclassOf<ASideScrollingCharacter> CharacterClass;
 
 protected:
-
 	/** Gameplay initialization */
 	virtual void BeginPlay() override;
 
@@ -63,5 +60,4 @@ protected:
 
 	/** Returns true if the player should use UMG touch controls */
 	bool ShouldUseTouchControls() const;
-
 };
