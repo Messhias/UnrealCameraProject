@@ -1,0 +1,15 @@
+# Unreal Engine
+Binaries/
+DerivedDataCache/
+Intermediate/
+Saved/
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+
+# Project files
+*.sln
+*.xcodeproj
+*.xcworkspace
